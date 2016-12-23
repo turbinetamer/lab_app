@@ -33,7 +33,7 @@ def lab_temp():
 	print temp,internal
 	
 	if temp is not None and internal is not None:
-		return render_template("lab_temp_v2.html", d_temp=temp, d_int=internal)
+		return render_template("lab_temp.html", d_temp=temp, d_int=internal)
 		#return "We Have Data!"
 		#return 'Temp=%0.1f  Internal=%0.1f'%(temp,internal)
 	else:
