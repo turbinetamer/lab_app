@@ -8,7 +8,7 @@ app.debug = True # Make this False if you are no longer debugging
 
 @app.route("/")
 def hello():
-    return "Hello World!-from lab_app_v2.py"
+    return "Hello World!-from lab_app.py"
 
 @app.route("/lab_temp")
 def lab_temp():
