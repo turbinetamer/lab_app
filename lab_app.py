@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template
 import time
 import datetime
-import arrow
+
 
 app = Flask(__name__)
 app.debug = True # Make this False if you are no longer debugging
@@ -44,13 +44,16 @@ def lab_temp():
 @app.route("/lab_env_db", methods=['GET']) 
 def lab_env_db():
 	temperatures, humidities, from_date_str, to_date_str = get_records()
+	
+	#return 
+	#return "lab_env_db from %s to %s  items=%d last row %s " % (from_date_str, to_date_str, len(temperatures), temperatures[len(temperatures)-1])
 	#return render_template("lab_env_db.html",temp=temperatures,hum=humidities)
 	return render_template("lab_env_db.html",temp 	= temperatures, 
 											 hum= humidities,
 											 from_date = from_date_str,
 											 to_date = to_date_str,
-											 temp_items= len(temperatures),
-											 hum_items= len(humidities))
+											 temp_items = len(temperatures),
+											 hum_items = len(humidities))
 
 def get_records():
 	from_date_str 	= request.args.get('from',time.strftime("%Y-%m-%d 00:00")) #Get the from date value from the URL
@@ -58,11 +61,17 @@ def get_records():
 	range_h_form	= request.args.get('range_h','');  #This will return a string, if field range_h exists in the request
 
 	range_h_int 	= "nan"  #initialise this variable with not a number
-
+	dlist = {"from_date_str":from_date_str,
+				"to_date_str":to_date_str,
+				"range_h_form":range_h_form}
+				
+	for key in dlist:
+		print(key,dlist[key])
+	
 	try: 
 		range_h_int	= int(range_h_form)
 	except:
-		print "range_h_form not a number"
+		print "range_h_form still not a number, too bad"
 
 	if not validate_date(from_date_str):			# Validate date before sending it to the DB
 		from_date_str 	= time.strftime("%Y-%m-%d 00:00")
@@ -77,13 +86,36 @@ def get_records():
 		from_date_str   = time_from.strftime("%Y-%m-%d %H:%M")
 		to_date_str	    = time_to.strftime("%Y-%m-%d %H:%M")
 
+	for key in dlist:
+		print(key,dlist[key])
+	
 	import sqlite3
 	conn=sqlite3.connect('/var/www/lab_app/lab_app.db')
 	curs=conn.cursor()
+	t_cmd = "SELECT * FROM temperatures WHERE rDateTime BETWEEN ? AND ?", (from_date_str, to_date_str)
+	print("t_cmd ",t_cmd)
 	curs.execute("SELECT * FROM temperatures WHERE rDateTime BETWEEN ? AND ?", (from_date_str, to_date_str))
 	temperatures 	= curs.fetchall()
+	ok_temps=[]							# validate database records
+	for row in temperatures:
+		if row[2] == None:
+			print(row)					# log error records
+		else:
+			ok_temps.append(row)
+	temperatures = ok_temps
+	
+	c_cmd = "SELECT * FROM humidities WHERE rDateTime BETWEEN ? AND ?", (from_date_str, to_date_str)
+	print("c_cmd ",c_cmd)
 	curs.execute("SELECT * FROM humidities WHERE rDateTime BETWEEN ? AND ?", (from_date_str, to_date_str))
 	humidities 		= curs.fetchall()
+	ok_humids=[]							# validate database records
+	for row in humidities:
+		if row[2] == None:
+			print(row)					# log error records
+		else:
+			ok_humids.append(row)
+	humidities = ok_humids
+	
 	conn.close()
 	return [temperatures, humidities, from_date_str, to_date_str]
 
@@ -95,6 +127,6 @@ def validate_date(d):
 		return False
 
 if __name__ == "__main__":
-	print "Starting __main__"
+#	print "Starting __main__"
 	app.run(host='0.0.0.0', port=8080)
 	
